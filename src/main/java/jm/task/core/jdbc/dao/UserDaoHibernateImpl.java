@@ -37,6 +37,9 @@ public class UserDaoHibernateImpl implements UserDao {
 
             System.out.println("DB created");
         } catch (Exception e) {
+            if (transaction.getStatus() == ACTIVE || transaction.getStatus() == MARKED_ROLLBACK) {
+                transaction.rollback();
+            }
             e.printStackTrace();
         }
     }
@@ -56,6 +59,9 @@ public class UserDaoHibernateImpl implements UserDao {
             System.out.println("DB dropped");
 
         } catch (Exception e) {
+            if (transaction.getStatus() == ACTIVE || transaction.getStatus() == MARKED_ROLLBACK) {
+                transaction.rollback();
+            }
             e.printStackTrace();
         }
 
@@ -109,10 +115,16 @@ public class UserDaoHibernateImpl implements UserDao {
         String hql = "FROM User";
         List<User> userList = new ArrayList<>();
 
-        try (Session session = sessionFactory.openSession()) {
+        Session session = sessionFactory.openSession();
+        Transaction transaction = session.getTransaction();
+
+        try (session) {
             Query query = session.createQuery(hql);
             userList = query.getResultList();
         } catch (Exception e) {
+            if (transaction.getStatus() == ACTIVE || transaction.getStatus() == MARKED_ROLLBACK) {
+                transaction.rollback();
+            }
             e.printStackTrace();
         }
         return userList;
